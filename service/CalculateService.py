@@ -1,5 +1,5 @@
 from service.exel_writer import write_to_exel
-from service.position_table_reader import get_names, gel_all_from
+from service.position_table_reader import get_names, gel_all_from, get_left_for_name_to_june
 from service.utils import MONTH, get_day, get_mont_zero_num
 
 
@@ -34,6 +34,8 @@ def process(date_from, date_to, tk):
     monthes = MONTH[MONTH.index(month_from):MONTH.index(month_to) + 1]
     person = get_names(monthes[-1])
 
+    balance_bonus = get_left_for_name_to_june()
+
     result = []
     for row in person:
         result.append({
@@ -49,12 +51,12 @@ def process(date_from, date_to, tk):
 
     filter_with_date_range(month_from, day_from_n, month_to, day_to_n, raw_data)
 
-    result = group_30_days(monthes, raw_data, person)
+    result = group_30_days(monthes, raw_data, person, balance_bonus)
 
-    write_to_exel(result, month_from, day_from_n, month_to, day_to_n)
+    write_to_exel(result, month_from, day_from_n, month_to, day_to_n, monthes)
 
 
-def group_30_days(monthes, raw_data, person):
+def group_30_days(monthes, raw_data, person, balance_bonus):
     result = {}
 
     for pers in person:
@@ -69,13 +71,14 @@ def group_30_days(monthes, raw_data, person):
                 }
             if name in raw_data[month]:
                 bz = raw_data[month][name]
-                count = get_start_count(month, monthes, name, result)
+                count = get_start_count(month, monthes, name, result, balance_bonus)
+                result[name]["gr"][-1]["count"] = count
                 f = None
                 to = None
                 temp = None
                 for j, day in enumerate(bz):
                     count += 1
-                    if j == 0:
+                    if j == 0:  # todo?
                         f = bz[j]
                         temp = bz[j]
                         to = bz[j]
@@ -89,8 +92,8 @@ def group_30_days(monthes, raw_data, person):
                                 f = bz[j + 1]
                             count = 0
                     else:
-                        if j == 1:
-                            f = bz[j - 1]
+                        # if j == 1:
+                        #     f = bz[j - 1]
                         temp = bz[j - 1]
                         to = bz[j]
                         dif_days = to - temp
@@ -107,11 +110,23 @@ def group_30_days(monthes, raw_data, person):
                                 count = 0
 
                         else:
-                            last = result[name]["gr"][-1]
-                            last["count"] += count
-                            last["f"].append(f"{str(f)}.{get_mont_zero_num(month)}")
-                            last["to"].append(f"{str(temp)}.{get_mont_zero_num(month)}")
-                            f = bz[j]
+                            if count == 30:
+                                last = result[name]["gr"][-1]
+                                last["count"] = 30
+                                last["f"].append(f"{str(f)}.{get_mont_zero_num(month)}")
+                                last["to"].append(f"{str(temp)}.{get_mont_zero_num(month)}")
+                                last["f"].append(f"{str(to)}.{get_mont_zero_num(month)}")
+                                last["to"].append(f"{str(to)}.{get_mont_zero_num(month)}")
+                                result[name]["gr"].append({"count": 0, "f": [], "to": []})
+                                if j + 1 < len(bz):
+                                    f = bz[j + 1]
+                                count = 0
+                            else:
+                                last = result[name]["gr"][-1]
+                                last["count"] += count
+                                last["f"].append(f"{str(f)}.{get_mont_zero_num(month)}")
+                                last["to"].append(f"{str(temp)}.{get_mont_zero_num(month)}")
+                                f = bz[j]
 
                         # count += 1
 
@@ -133,11 +148,20 @@ def group_30_days(monthes, raw_data, person):
     return result
 
 
-def get_start_count(month, monthes, name, result):
+def get_start_count(month, monthes, name, result, balance_bonus):
     if result[name]["gr"][-1]["count"] == 30:
         return 0
 
-    return result[name]["gr"][-1]["count"]
+    temp = 0
+    if 'червень' in monthes:
+        for bb in balance_bonus:
+            if bb["name"] == name:
+                temp = int(bb["left"])
+                bb["left"] = "0"
+            if temp > 0:
+                break
+
+    return result[name]["gr"][-1]["count"] + temp
 
 
 def transform_moth(month_data):
