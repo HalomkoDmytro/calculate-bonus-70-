@@ -78,7 +78,7 @@ def group_30_days(monthes, raw_data, person, balance_bonus):
                 temp = None
                 for j, day in enumerate(bz):
                     count += 1
-                    if j == 0:  # todo?
+                    if j == 0:
                         f = bz[j]
                         temp = bz[j]
                         to = bz[j]
