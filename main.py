@@ -13,16 +13,16 @@ from LoggerWriter import LoggerWriter
 from service.CalculateService import process
 
 
-# Path("log").mkdir(parents=True, exist_ok=True)
-# formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-# handler = TimedRotatingFileHandler('log/error.log', when="midnight", interval=1, encoding='utf8')
-# handler.suffix = "%Y-%m-%d"
-# handler.setFormatter(formatter)
-# logger = logging.getLogger()
-# logger.setLevel(logging.ERROR)
-# logger.addHandler(handler)
-# sys.stdout = LoggerWriter(logging.debug)
-# sys.stderr = LoggerWriter(logging.warning)
+Path("log").mkdir(parents=True, exist_ok=True)
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+handler = TimedRotatingFileHandler('log/error.log', when="midnight", interval=1, encoding='utf8')
+handler.suffix = "%Y-%m-%d"
+handler.setFormatter(formatter)
+logger = logging.getLogger()
+logger.setLevel(logging.ERROR)
+logger.addHandler(handler)
+sys.stdout = LoggerWriter(logging.debug)
+sys.stderr = LoggerWriter(logging.warning)
 
 
 class Bonus70App:
